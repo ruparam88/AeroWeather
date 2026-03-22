@@ -1,5 +1,5 @@
 
-link - {https://aeroweather-snowy.vercel.app/}
+link - https://aeroweather-snowy.vercel.app/
 
 # 🌦️ AeroWeather
 
