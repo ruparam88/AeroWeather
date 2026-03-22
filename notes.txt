@@ -1,0 +1,176 @@
+=======For single url=======
+async function run(url='https://jsonplaceholder.typicode.com/todos/1'){
+    const response = await fetch(url)
+    const data = await response.json()
+    console.log(data)
+
+
+    ---------------output---------------
+            {
+            "userId": 1,
+            "id": 2,
+            "title": "quis ut nam facilis et officia qui",
+            "completed": false
+            }
+}
+
+=======For Multiple urls=======
+async function run(urls) {
+    const results = await Promise.all(
+        urls.map(url=>fetch(url))
+    )
+    // console.log(results)
+    results.forEach(async result=>console.log((await result.json()).title))
+}
+
+run(['https://jsonplaceholder.typicode.com/todos/1',
+     'https://jsonplaceholder.typicode.com/todos/2',
+     'https://jsonplaceholder.typicode.com/todos/3',
+     'https://jsonplaceholder.typicode.com/todos/4',
+     'https://jsonplaceholder.typicode.com/todos/5',
+     'https://jsonplaceholder.typicode.com/todos/6',])
+
+
+
+Promise.all()
+Promise.allSettled()
+
+=============handle error=======================
+async function run(urls) {
+    const results = await Promise.allSettled(
+        urls.map(url =>
+            fetch(url).then(res => {
+                if (!res.ok) {
+                    throw new Error(`Url issue: ${url}`);
+                }
+                return res.json();
+            })
+        )
+    );
+
+    results.forEach(r => {
+        if (r.status === "fulfilled") {
+            console.log(r.value.title);
+        } else {
+            console.error("Failed:", r.reason.message);
+        }
+    });
+}
+run(['https://jsonplaceholder.typicode.com/todos/fasdfas',
+     'https://jsonplaceholder.typicode.com/todos/2',
+     'https://jsonplaceholder.typicode.com/todos/3',
+     'https://jsonplaceholder.typicode.com/todos/4',
+     'https://jsonplaceholder.typicode.com/todos/5',
+     'https://jsonplaceholder.typicode.com/todos/6',])
+
+
+
+
+
+
+
+===============This is the actual response we get when we do fetch(url)=========================
+
+     Response {
+  status: 200,
+  statusText: 'OK',
+  headers: Headers {
+    date: 'Sat, 21 Mar 2026 16:26:33 GMT',
+    'content-type': 'application/json; charset=utf-8',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'access-control-allow-credentials': 'true',
+    'cache-control': 'max-age=43200',
+    etag: 'W/"53-hfEnumeNh6YirfjyjaujcOPPT+s"',
+    expires: '-1',
+    nel: '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}',
+    pragma: 'no-cache',
+    'report-to': '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=EUw%2BjpHrFA%2F78EHvFId4qhjtK%2FB2m7SWJYlyOLwLQeA%3D\\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\\u0026ts=1773920613"}],"max_age":3600}',
+    'reporting-endpoints': 'heroku-nel="https://nel.heroku.com/reports?s=EUw%2BjpHrFA%2F78EHvFId4qhjtK%2FB2m7SWJYlyOLwLQeA%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1773920613"',
+    server: 'cloudflare',
+    vary: 'Origin, Accept-Encoding',
+    via: '2.0 heroku-router',
+    'x-content-type-options': 'nosniff',
+    'x-powered-by': 'Express',
+    'x-ratelimit-limit': '1000',
+    'x-ratelimit-remaining': '964',
+    'x-ratelimit-reset': '1773920661',
+    age: '16974',
+    'cf-cache-status': 'HIT',
+    'content-encoding': 'br',
+    'cf-ray': '9dfe51a6fc10ce3a-SIN',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  body: ReadableStream { locked: false, state: 'readable', supportsBYOB: true },
+  bodyUsed: false,
+  ok: true,
+  redirected: false,
+  type: 'basic',
+  url: 'https://jsonplaceholder.typicode.com/todos/1'
+}
+
+
+
+body: ReadableStream { locked: false, state: 'readable', supportsBYOB: true },
+bodyUsed: false,
+
+now when we do "const data = await response.json()"
+bodyUsed will be true which allows us to read data from response such as data.title
+
+
+==============why response.json() needs await at the begining================
+response.json() is asynchronous because it has to consume a stream and parse it, both of which are non-trivial operations that cannot be done instantly or synchronously without blocking the runtime
+
+
+
+
+const obj = {
+  user: {
+    name: {}
+  }
+};
+//Safe Solution → Optional Chaining (🔥 MUST KNOW)
+console.log(obj.user?.name);
+Now:
+obj.user → undefined
+→ stops safely
+→ returns undefined (no crash)
+
+
+=============================================================
+console.log(obj.user.name.firstname); //undefined
+console.log(obj.user.name.firstname.something); //undefined
+=============================================================
+
+oooo cause its a nested object 
+so when we try to get and object which is not defined we get undefined but when we try to access the property of undefined object we get errror
+------To prevent server crash we use Optional Chaining------
+
+
+
+
+
+
+
+
+
+
+============Clean Production Pattern (Memorize This)============
+
+async function apiCall(url) {
+  try {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error(`HTTP error ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    return data;
+
+  } catch (err) {
+    console.error("API Error:", err.message);
+    return null;
+  }
+}
